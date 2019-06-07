@@ -21,7 +21,7 @@ library
                        GeneralizedNewtypeDeriving,
                        TemplateHaskell,
                        QuasiQuotes
-  build-depends:       base >=4.10
+  build-depends:       base >=4.10,
                        bytestring,
                        transformers,
                        mtl,
