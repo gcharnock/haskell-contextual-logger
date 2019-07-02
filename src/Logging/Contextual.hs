@@ -73,31 +73,31 @@ data LogEvent = LogEvent
     } 
 
 insertEvent :: Statement StartEvent () 
-insertEvent = Statement sqlStmnt encoder De.unit True
+insertEvent = Statement sqlStmnt encoder De.noResult True
   where sqlStmnt = "INSERT INTO event(event_id, timestamp_start, parent, event_type) VALUES($1, $2, $3, $4)"
-        encoder = contramap seEventId (En.param En.uuid) <>
-                  contramap seTimestampStart (En.param En.timestamptz) <>
-                  contramap seParent (En.nullableParam En.uuid) <>
-                  contramap seEventType (En.param En.text)
+        encoder = contramap seEventId (En.param $ En.nonNullable En.uuid) <>
+                  contramap seTimestampStart (En.param $ En.nonNullable En.timestamptz) <>
+                  contramap seParent (En.param $ En.nullable En.uuid) <>
+                  contramap seEventType (En.param $ En.nonNullable En.text)
 
 finishEvent :: Statement FinishEvent ()
-finishEvent = Statement sqlStmnt encoder De.unit True
+finishEvent = Statement sqlStmnt encoder De.noResult True
   where sqlStmnt = "UPDATE event SET timestamp_end=$1, error=$2 WHERE event_id=$3"
-        encoder = contramap feTimestampEnd (En.param En.timestamptz) <>
-                  contramap feError (En.nullableParam En.jsonb) <>
-                  contramap feEventId (En.param En.uuid)
+        encoder = contramap feTimestampEnd (En.param $ En.nonNullable En.timestamptz) <>
+                  contramap feError (En.param $ En.nullable En.jsonb) <>
+                  contramap feEventId (En.param $ En.nonNullable En.uuid)
 
 insertMessage :: Statement Message ()
-insertMessage = Statement sqlStmnt encoder De.unit True
+insertMessage = Statement sqlStmnt encoder De.noResult True
   where sqlStmnt = "INSERT INTO message(message, level, event_id, timestamp, data, filename, line, col) VALUES($1, $2, $3, $4, $5, $6, $7, $8)"
-        encoder = contramap (logMsgBody.msgData) (En.param En.text) <>
-                  contramap (logMsgLevel.msgData) (En.param En.text) <>
-                  contramap msgEventId (En.nullableParam  En.uuid) <>
-                  contramap msgTimestamp (En.param En.timestamptz) <>
-                  contramap (logMsgData.msgData) (En.nullableParam En.jsonb) <>
-                  contramap (logMsgFilename.msgData) (En.nullableParam En.text) <>
-                  contramap (fmap fromIntegral.logMsgLine.msgData) (En.nullableParam En.int4) <>
-                  contramap (fmap fromIntegral.logMsgCol.msgData) (En.nullableParam En.int4) 
+        encoder = contramap (logMsgBody.msgData) (En.param $ En.nonNullable En.text) <>
+                  contramap (logMsgLevel.msgData) (En.param $ En.nonNullable En.text) <>
+                  contramap msgEventId (En.param $ En.nullable En.uuid) <>
+                  contramap msgTimestamp (En.param $ En.nonNullable En.timestamptz) <>
+                  contramap (logMsgData.msgData) (En.param $ En.nullable En.jsonb) <>
+                  contramap (logMsgFilename.msgData) (En.param $ En.nullable En.text) <>
+                  contramap (fmap fromIntegral.logMsgLine.msgData) (En.param $ En.nullable En.int4) <>
+                  contramap (fmap fromIntegral.logMsgCol.msgData) (En.param $ En.nullable En.int4) 
 
 data ChanMsg = LEStart StartEvent | LEEnd FinishEvent | LEMessage Message
 
